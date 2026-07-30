@@ -68,6 +68,13 @@ function initializeFirebase() {
     return { db, auth };
 }
 
-const { db: firestore, auth: firebaseAuth } = initializeFirebase();
+const { db: firestore, auth: firebaseAuth } = (() => {
+    try {
+        return initializeFirebase();
+    } catch (e) {
+        console.warn('⚠️ Firebase init skipped:', e.message);
+        return { db: null, auth: null };
+    }
+})();
 
 module.exports = { db: firestore, auth: firebaseAuth, initializeFirebase };
