@@ -6,12 +6,12 @@ const helmet = require('helmet');
 const path = require('path');
 const http = require('http');
 const cors = require('cors');
+const fs = require('fs');
 
 // ─── Config Modules ───────────────────────────────────────────────
 const { setupLogger } = require('./config/logger');
 const { buildCorsOptions } = require('./config/cors');
 const { connectDB } = require('./config/database');
-const { createSocketServer } = require('./config/socket');
 
 // ─── Route Imports ────────────────────────────────────────────────
 const authRoutes = require('./routes/auth');
@@ -27,16 +27,14 @@ const chatRoutes = require('./routes/chat');
 const analyticsRoutes = require('./routes/analytics');
 const progressRoutes = require('./routes/progress');
 
-// ─── App & Server Initialisation ─────────────────────────────────
-setupLogger(); // Must be called before any console.log
+// ─── App Initialisation ───────────────────────────────────────────
+setupLogger();
 
 const app = express();
 app.use(helmet({
-    contentSecurityPolicy: false, // Set to false if it blocks your specific frontend setup, otherwise keep default
+    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false
 }));
-const server = http.createServer(app);
-createSocketServer(server); // Attach Socket.IO
 
 // ─── Middleware ───────────────────────────────────────────────────
 app.use(cors(buildCorsOptions()));
@@ -57,12 +55,11 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/progress', progressRoutes);
 
 // ─── Static Frontend (Production) ────────────────────────────────
-const fs = require('fs');
 const distPath = path.join(__dirname, 'dist');
 if (fs.existsSync(distPath)) {
     app.use(express.static(distPath));
 } else {
-    console.error('CRITICAL: dist folder MISSING. Run `npm run build` first.');
+    console.error('CRITICAL: dist folder MISSING.');
 }
 
 // ─── Health Check ─────────────────────────────────────────────────
@@ -74,35 +71,59 @@ app.get(/^(?!\/api).*/, (req, res) => {
     if (fs.existsSync(indexFile)) {
         res.sendFile(indexFile);
     } else {
-        res.status(500).send('Frontend build not found. Run `npm run build`.');
+        res.status(500).send('Frontend build not found.');
     }
 });
 
-// ─── Server Startup ───────────────────────────────────────────────
-const PORT = process.env.PORT || 5005;
-
-if (require.main === module) {
-    connectDB().catch(err => console.error('Failed to start database:', err));
-    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-}
-
-// ─── LiveKit Webhook (must come after server.listen) ─────────────
+// ─── LiveKit Webhook ──────────────────────────────────────────────
 let receiver = null;
 if (process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET) {
-    const { WebhookReceiver } = require('livekit-server-sdk');
-    receiver = new WebhookReceiver(process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET);
+    try {
+        const { WebhookReceiver } = require('livekit-server-sdk');
+        receiver = new WebhookReceiver(process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET);
+    } catch (e) {
+        console.warn('LiveKit webhook receiver not initialised:', e.message);
+    }
 }
 
 app.post('/api/livekit/webhook', async (req, res) => {
-    if (!receiver) {
-        return res.status(503).json({ error: 'LiveKit not configured' });
-    }
+    if (!receiver) return res.status(503).json({ error: 'LiveKit not configured' });
     try {
-        const event = receiver.receive(req.body, req.get('Authorization'));
+        receiver.receive(req.body, req.get('Authorization'));
         res.json({ received: true });
     } catch (err) {
         res.status(400).json({ error: 'Invalid webhook' });
     }
 });
 
-module.exports = { app, server };
+// ─── Init DB ──────────────────────────────────────────────────────
+// Call once and cache (Vercel keeps warm instances between requests)
+let dbReady = false;
+const ensureDB = async () => {
+    if (!dbReady) {
+        await connectDB().catch(err => console.error('DB init error:', err));
+        dbReady = true;
+    }
+};
+
+// Kick off DB connection immediately on cold start
+ensureDB();
+
+// ─── Server Startup (local / Railway / Render) ────────────────────
+if (require.main === module) {
+    const server = http.createServer(app);
+
+    // Attach Socket.IO only when running as a real long-lived server
+    try {
+        const { createSocketServer } = require('./config/socket');
+        createSocketServer(server);
+    } catch (e) {
+        console.warn('Socket.IO not available:', e.message);
+    }
+
+    const PORT = process.env.PORT || 5005;
+    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+// ─── Vercel Serverless Export ─────────────────────────────────────
+module.exports = app;
