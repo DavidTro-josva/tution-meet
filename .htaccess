@@ -1,0 +1,23 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Redirect HTTP to HTTPS
+  RewriteCond %{HTTPS} off
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Don't rewrite files or directories
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  # RewriteRule ^ - [L]
+
+  # Handle SPA Routing (React Router)
+  # If request is not for /api, rewrite to index.html (frontend handles routing)
+  # RewriteRule ^(?!api/).* index.html [L]
+
+  # Node.js App Handover (Assuming OviPanel sets up Passenger/Node)
+  # Usually handled by "Setup Node.js App" in cPanel automatically.
+  # But if manual proxy is needed:
+
+  # Proxy to local Node port (Uncomment if needed & reverse proxy enabled)
+  # RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
+</IfModule>

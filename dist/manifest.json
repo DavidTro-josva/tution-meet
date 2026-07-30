@@ -1,0 +1,25 @@
+{
+    "short_name": "Tution Meet",
+    "name": "Tution Meet - Modern Learning",
+    "icons": [
+        {
+            "src": "favicon.ico",
+            "sizes": "64x64 32x32 24x24 16x16",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "icons/icon-192.svg",
+            "type": "image/svg+xml",
+            "sizes": "192x192"
+        },
+        {
+            "src": "icons/icon-512.svg",
+            "type": "image/svg+xml",
+            "sizes": "512x512"
+        }
+    ],
+    "start_url": ".",
+    "display": "standalone",
+    "theme_color": "#f27c07",
+    "background_color": "#ffffff"
+}

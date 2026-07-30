@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#f27c07" />
+  <meta name="description" content="Tuition Meet — Live classes, assignments, and tutoring in one place" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Tuition Meet" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>Tuition Meet</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script type="module" crossorigin src="/assets/index-D5v3CKm-.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/vendor-d6WyrUQH.js">
+  <link rel="modulepreload" crossorigin href="/assets/react-vendor-DBtsxMcD.js">
+  <link rel="modulepreload" crossorigin href="/assets/livekit-DtkH66P8.js">
+  <link rel="stylesheet" crossorigin href="/assets/livekit-DcBnOcQS.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-M5D2g54I.css">
+</head>
+
+<body>
+  <div id="root"></div>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('SW registered:', reg.scope))
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
+  </script>
+
+  <script>
+    function initPasswordToggles() {
+      const passwordInputs = document.querySelectorAll('input[type="password"], input[data-has-eye="true"]');
+      passwordInputs.forEach(input => {
+        if (input.dataset.eyeAttached) return;
+        input.dataset.eyeAttached = "true";
+        input.dataset.hasEye = "true";
+
+        let wrapper = input.parentElement;
+        if (!wrapper.classList.contains('password-input-wrapper')) {
+          wrapper = document.createElement('div');
+          wrapper.className = 'password-input-wrapper';
+          input.parentNode.insertBefore(wrapper, input);
+          wrapper.appendChild(input);
+        }
+
+        const eyeBtn = document.createElement('button');
+        eyeBtn.type = 'button';
+        eyeBtn.className = 'password-toggle-btn';
+        eyeBtn.ariaLabel = 'Toggle password visibility';
+        eyeBtn.title = 'Show/Hide Password';
+        eyeBtn.innerHTML = '👁️';
+
+        eyeBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (input.type === 'password') {
+            input.type = 'text';
+            eyeBtn.innerHTML = '🙈';
+            eyeBtn.style.color = '#f27c07';
+          } else {
+            input.type = 'password';
+            eyeBtn.innerHTML = '👁️';
+            eyeBtn.style.color = '#64748b';
+          }
+        });
+
+        wrapper.appendChild(eyeBtn);
+      });
+    }
+
+    const observer = new MutationObserver(() => initPasswordToggles());
+    document.addEventListener('DOMContentLoaded', () => {
+      initPasswordToggles();
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+  </script>
+
+</body>
+
+</html>
