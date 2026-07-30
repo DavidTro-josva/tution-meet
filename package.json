@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite --host",
     "dev:full": "concurrently -k -p \"{name}\" -n \"SERVER,VITE\" -c \"bgBlue.bold,bgGreen.bold\" \"node server.js\" \"vite --host\"",
-    "build": "vite build",
+    "build": "echo 'Pre-built dist already included'",
     "preview": "vite preview",
     "start": "node server.js",
     "test": "jest --verbose --detectOpenHandles --passWithNoTests",
