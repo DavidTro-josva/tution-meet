@@ -2,6 +2,10 @@
   "version": 2,
   "builds": [
     {
+      "src": "dist/**",
+      "use": "@vercel/static"
+    },
+    {
       "src": "server.js",
       "use": "@vercel/node"
     }
@@ -16,15 +20,20 @@
       "dest": "server.js"
     },
     {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|webp|mp4|webm|txt|xml|manifest))",
-      "dest": "server.js"
+      "src": "/assets/(.*)",
+      "dest": "dist/assets/$1"
+    },
+    {
+      "src": "/icons/(.*)",
+      "dest": "dist/icons/$1"
+    },
+    {
+      "src": "/(sw\\.js|manifest\\.json)",
+      "dest": "dist/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "server.js"
+      "dest": "dist/index.html"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
