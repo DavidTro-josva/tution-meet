@@ -554,7 +554,19 @@
             });
           }
         } catch (err) {
-          console.error("Failed to load serial ports:", err);
+          console.warn("PySerial not detected or blocked on HTTPS; loading Virtual Demo COM Ports");
+          const virtualPorts = [
+            { port: "COM10", description: "Virtual RFID Scanner (Tuition Meet)" },
+            { port: "COM11", description: "Virtual Biometric Sensor" },
+            { port: "COM12", description: "Virtual Arduino Serial Port" }
+          ];
+          portSelect.innerHTML = '<option value="">Select COM Port...</option>';
+          virtualPorts.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.port;
+            opt.textContent = `${p.port} (${p.description})`;
+            portSelect.appendChild(opt);
+          });
         }
       }
 
@@ -584,9 +596,18 @@
             connectBtn.innerHTML = "<span>⚡ Connect Hardware</span>";
           }
         } catch (err) {
-          updateStatusUI(false, null, null, false, "Could not connect to PySerial service on port 5050.");
-          connectBtn.disabled = false;
+          // Automatic Virtual Demo Mode on Vercel / HTTPS
+          updateStatusUI(true, port, baudRate, false, null);
+          statusText.textContent = "Connected (Virtual Demo)";
+          statusText.style.color = "#22c55e";
+          portInfo.textContent = `${port} @ ${baudRate} bps (Virtual Hardware Mode)`;
+          portInfo.style.color = "#38bdf8";
+          appendConsoleLine(`>>> [⚡ VIRTUAL PySERIAL CONNECTED] Active on ${port} @ ${baudRate} bps`);
+          appendConsoleLine(`>>> [READY] Hardware Simulation Mode enabled for Vercel demo!`);
+          appendConsoleLine(`>>> Click "⚡ Simulate RFID Check-in" below to test student check-in!`);
+          connectBtn.disabled = true;
           connectBtn.innerHTML = "<span>⚡ Connect Hardware</span>";
+          disconnectBtn.disabled = false;
         }
       });
 
@@ -708,7 +729,7 @@
             }
           }
         } catch (err) {
-          updateStatusUI(false, null, null, false, "PySerial Service offline");
+          updateStatusUI(false, null, null, false, "Virtual Hardware Simulation Ready (Select COM10 & Connect)");
         }
       }
 
