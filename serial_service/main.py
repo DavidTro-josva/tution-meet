@@ -29,6 +29,18 @@ def create_app() -> Flask:
     # Enable CORS for all routes under /serial so web frontend on 5005 can query it
     CORS(app, resources={r"/*": {"origins": "*"}})
 
+    @app.after_request
+    def add_pna_headers(response):
+        """
+        Add Private Network Access (PNA) CORS headers required by Chrome when
+        accessing http://localhost:5050 from cloud domains (e.g. Vercel / HTTPS).
+        """
+        response.headers["Access-Control-Allow-Private-Network"] = "true"
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+        return response
+
     # Register serial blueprint
     app.register_blueprint(serial_bp)
 
