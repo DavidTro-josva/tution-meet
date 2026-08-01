@@ -29,22 +29,20 @@ function initializeFirebase() {
         }
     }
 
+    if (!serviceAccount || !serviceAccount.private_key) {
+        console.log('⚠️ Firebase: No service account configured, using fast in-memory DB');
+        return { db: null, auth: null };
+    }
+
     if (!admin.apps.length) {
         try {
-            if (serviceAccount && serviceAccount.private_key) {
-                admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount)
-                });
-                console.log('🔥 Firebase Admin: Initialized with service account');
-            } else {
-                // Use default credentials - in GCP, works Cloud Run, etc.
-                admin.initializeApp({
-                    projectId: projectId
-                });
-                console.log('🔥 Firebase Admin: Initialized (using default credentials)');
-            }
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount)
+            });
+            console.log('🔥 Firebase Admin: Initialized with service account');
         } catch (error) {
             console.warn('⚠️ Firebase Admin initialization issue:', error.message);
+            return { db: null, auth: null };
         }
     }
 
