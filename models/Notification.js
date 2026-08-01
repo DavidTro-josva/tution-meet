@@ -1,4 +1,5 @@
 const { getMemoryDB } = require('../config/database');
+const { wrapQuery } = require('./queryHelper');
 
 class Notification {
     static COLLECTION = 'notifications';
@@ -16,14 +17,17 @@ class Notification {
         });
     }
 
-    static async find(query = {}) {
-        const db = this.getDb();
-        
-        if (query.userId) {
-            return await db.findWhere('userId', query.userId);
-        }
-        
-        return await db.findAll();
+    static find(query = {}) {
+        return wrapQuery((async () => {
+            const db = this.getDb();
+            let results;
+            if (query.userId) {
+                results = await db.findWhere('userId', query.userId);
+            } else {
+                results = await db.findAll();
+            }
+            return results;
+        })());
     }
 
     static async countDocuments(query = {}) {

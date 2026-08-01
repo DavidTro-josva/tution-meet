@@ -1,4 +1,5 @@
 const { getMemoryDB } = require('../config/database');
+const { wrapQuery } = require('./queryHelper');
 
 class Progress {
     static COLLECTION = 'progress';
@@ -17,30 +18,32 @@ class Progress {
         });
     }
 
-    static async find(query = {}) {
-        const db = this.getDb();
-        
-        if (query.studentId) {
-            return await db.findWhere('studentId', query.studentId);
-        }
-        
-        return await db.findAll();
+    static find(query = {}) {
+        return wrapQuery((async () => {
+            const db = this.getDb();
+            if (query.studentId) {
+                return await db.findWhere('studentId', query.studentId);
+            }
+            return await db.findAll();
+        })());
     }
 
-    static async findById(id) {
-        const db = this.getDb();
-        return await db.findById(id);
+    static findById(id) {
+        return wrapQuery((async () => {
+            const db = this.getDb();
+            return await db.findById(id);
+        })());
     }
 
-    static async findOne(query) {
-        const db = this.getDb();
-        
-        if (query.studentId && query.lessonId) {
-            const results = await db.findWhere('studentId', query.studentId);
-            return results.find(p => p.lessonId === query.lessonId) || null;
-        }
-        
-        return null;
+    static findOne(query) {
+        return wrapQuery((async () => {
+            const db = this.getDb();
+            if (query.studentId && query.lessonId) {
+                const results = await db.findWhere('studentId', query.studentId);
+                return results.find(p => p.lessonId === query.lessonId) || null;
+            }
+            return null;
+        })());
     }
 }
 

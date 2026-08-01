@@ -766,3 +766,16 @@ h2.section-title,
   -webkit-text-fill-color: #64748b !important;
   font-size: 0.88rem !important;
 }
+
+/* Remove language selector and dark/light theme toggle buttons */
+.theme-toggle-btn, .land-nav__btn-icon, .lang-selector {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}

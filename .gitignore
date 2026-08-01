@@ -7,3 +7,9 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 node_modules
+scratch/
+__pycache__/
+*.pyc
+.gemini/
+.system_generated/
+

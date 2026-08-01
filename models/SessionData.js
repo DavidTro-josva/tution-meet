@@ -1,4 +1,5 @@
 const { getMemoryDB } = require('../config/database');
+const { wrapQuery } = require('./queryHelper');
 
 class SessionData {
     static COLLECTION = 'sessions';
@@ -7,15 +8,15 @@ class SessionData {
         return getMemoryDB().sessions;
     }
 
-    static async findOne(query) {
-        const db = this.getDb();
-        
-        if (query.roomId) {
-            const results = await db.findWhere('roomId', query.roomId);
-            return results[0] || null;
-        }
-        
-        return null;
+    static findOne(query) {
+        return wrapQuery((async () => {
+            const db = this.getDb();
+            if (query.roomId) {
+                const results = await db.findWhere('roomId', query.roomId);
+                return results[0] || null;
+            }
+            return null;
+        })());
     }
 
     static async create(data) {
@@ -28,19 +29,21 @@ class SessionData {
         });
     }
 
-    static async find(query = {}) {
-        const db = this.getDb();
-        
-        if (query.teacherId) {
-            return await db.findWhere('teacherId', query.teacherId);
-        }
-        
-        return await db.findAll();
+    static find(query = {}) {
+        return wrapQuery((async () => {
+            const db = this.getDb();
+            if (query.teacherId) {
+                return await db.findWhere('teacherId', query.teacherId);
+            }
+            return await db.findAll();
+        })());
     }
 
-    static async findById(id) {
-        const db = this.getDb();
-        return await db.findById(id);
+    static findById(id) {
+        return wrapQuery((async () => {
+            const db = this.getDb();
+            return await db.findById(id);
+        })());
     }
 
     static async findByIdAndUpdate(id, updateData) {

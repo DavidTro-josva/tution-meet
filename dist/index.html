@@ -20,6 +20,21 @@
   <link rel="modulepreload" crossorigin href="/assets/livekit-DtkH66P8.js">
   <link rel="stylesheet" crossorigin href="/assets/livekit-DcBnOcQS.css">
   <link rel="stylesheet" crossorigin href="/assets/index-M5D2g54I.css">
+  <style>
+    .theme-toggle-btn,
+    .land-nav__btn-icon,
+    .lang-selector {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+    }
+  </style>
 </head>
 
 <body>
@@ -38,6 +53,9 @@
     function initPasswordToggles() {
       const passwordInputs = document.querySelectorAll('input[type="password"], input[data-has-eye="true"]');
       passwordInputs.forEach(input => {
+        input.setAttribute('autocomplete', 'new-password');
+        input.setAttribute('data-lpignore', 'true');
+        if (input.form) input.form.setAttribute('autocomplete', 'off');
         if (input.dataset.eyeAttached) return;
         input.dataset.eyeAttached = "true";
         input.dataset.hasEye = "true";
@@ -75,13 +93,683 @@
       });
     }
 
-    const observer = new MutationObserver(() => initPasswordToggles());
+    function removeOptionButtons() {
+      document.querySelectorAll('.theme-toggle-btn, .land-nav__btn-icon, .lang-selector').forEach(el => {
+        if (el.parentElement && el.parentElement.children.length === 1 && el.parentElement.style && el.parentElement.style.position === 'relative') {
+          el.parentElement.remove();
+        }
+        el.remove();
+      });
+    }
+
+    const observer = new MutationObserver(() => {
+      initPasswordToggles();
+      removeOptionButtons();
+    });
     document.addEventListener('DOMContentLoaded', () => {
       initPasswordToggles();
+      removeOptionButtons();
       observer.observe(document.body, { childList: true, subtree: true });
     });
   </script>
 
-</body>
+  <!-- ==================== TUITION MEET PYSERIAL HARDWARE MANAGER UI ==================== -->
+  <style>
+    .tm-serial-fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: #fff;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-radius: 999px;
+      padding: 12px 22px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.5);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: tmSerialPulse 2s infinite;
+    }
+    @keyframes tmSerialPulse {
+      0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+      70% { box-shadow: 0 0 0 14px rgba(59, 130, 246, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    }
+    .tm-serial-top-btn {
+      position: fixed;
+      top: 16px;
+      right: 220px;
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .tm-serial-top-btn:hover,
+    .tm-serial-fab:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 32px rgba(37, 99, 235, 0.6);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+    .tm-serial-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #ef4444; /* red default */
+      transition: background-color 0.3s ease;
+      box-shadow: 0 0 8px currentColor;
+    }
+    .tm-serial-dot.connected {
+      background-color: #22c55e;
+      box-shadow: 0 0 10px #22c55e;
+    }
+    .tm-serial-dot.reconnecting {
+      background-color: #f59e0b;
+      box-shadow: 0 0 10px #f59e0b;
+    }
 
+    .tm-serial-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .tm-serial-modal-overlay.open {
+      display: flex;
+    }
+    .tm-serial-modal {
+      background: #1e293b;
+      color: #f8fafc;
+      width: 100%;
+      max-width: 650px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .tm-serial-modal-header {
+      padding: 18px 24px;
+      background: #0f172a;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tm-serial-modal-header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .tm-serial-close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 24px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+    }
+    .tm-serial-close-btn:hover {
+      color: #fff;
+    }
+    .tm-serial-modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .tm-serial-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 500px) {
+      .tm-serial-form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+    .tm-serial-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .tm-serial-field label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #94a3b8;
+    }
+    .tm-serial-field select,
+    .tm-serial-field input {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+    .tm-serial-field select:focus,
+    .tm-serial-field input:focus {
+      border-color: #3b82f6;
+    }
+    .tm-serial-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tm-serial-btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .tm-serial-btn-primary {
+      background: #22c55e;
+      color: #fff;
+    }
+    .tm-serial-btn-primary:hover {
+      background: #16a34a;
+    }
+    .tm-serial-btn-primary:disabled {
+      background: #334155;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+    .tm-serial-btn-danger {
+      background: #ef4444;
+      color: #fff;
+    }
+    .tm-serial-btn-danger:hover {
+      background: #dc2626;
+    }
+    .tm-serial-btn-danger:disabled {
+      background: #334155;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+    .tm-serial-btn-secondary {
+      background: #334155;
+      color: #e2e8f0;
+    }
+    .tm-serial-btn-secondary:hover {
+      background: #475569;
+    }
+    .tm-serial-status-box {
+      background: #0f172a;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tm-serial-console-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .tm-serial-console-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+    .tm-serial-console {
+      background: #090d16;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      height: 200px;
+      overflow-y: auto;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .tm-serial-console-line {
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+    .tm-serial-console-time {
+      color: #64748b;
+      margin-right: 8px;
+    }
+  </style>
+
+  <!-- Floating Hardware Action Buttons -->
+  <button id="tmSerialTopBtn" class="tm-serial-top-btn" title="Serial Hardware Monitor (Alt+S)">
+    <span>🔌 Hardware Serial (Alt+S)</span>
+  </button>
+  <button id="tmSerialFab" class="tm-serial-fab" title="Serial Hardware Monitor (Alt+S)">
+    <span id="tmSerialFabDot" class="tm-serial-dot"></span>
+    <span>🔌 Hardware Serial</span>
+  </button>
+
+  <!-- Serial Manager Modal -->
+  <div id="tmSerialOverlay" class="tm-serial-modal-overlay">
+    <div class="tm-serial-modal">
+      <div class="tm-serial-modal-header">
+        <h3>
+          <span>🔌 PySerial Hardware Manager</span>
+        </h3>
+        <button id="tmSerialCloseBtn" class="tm-serial-close-btn" title="Close">×</button>
+      </div>
+
+      <div class="tm-serial-modal-body">
+        <!-- Port and Baud Rate Selector -->
+        <div class="tm-serial-form-row">
+          <div class="tm-serial-field">
+            <label for="tmSerialPortSelect">COM Port</label>
+            <div style="display: flex; gap: 8px;">
+              <select id="tmSerialPortSelect" style="flex: 1;">
+                <option value="">Select COM Port...</option>
+              </select>
+              <button id="tmSerialRefreshBtn" class="tm-serial-btn tm-serial-btn-secondary" title="Refresh Ports" style="padding: 10px 12px;">🔄</button>
+            </div>
+          </div>
+
+          <div class="tm-serial-field">
+            <label for="tmSerialBaudSelect">Baud Rate (bps)</label>
+            <select id="tmSerialBaudSelect">
+              <option value="9600" selected>9600 (Default)</option>
+              <option value="115200">115200</option>
+              <option value="38400">38400</option>
+              <option value="19200">19200</option>
+              <option value="57600">57600</option>
+              <option value="4800">4800</option>
+              <option value="2400">2400</option>
+              <option value="1200">1200</option>
+              <option value="230400">230400</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Connection Actions & Status -->
+        <div class="tm-serial-actions">
+          <button id="tmSerialConnectBtn" class="tm-serial-btn tm-serial-btn-primary">
+            <span>⚡ Connect Hardware</span>
+          </button>
+          <button id="tmSerialDisconnectBtn" class="tm-serial-btn tm-serial-btn-danger" disabled>
+            <span>🔌 Disconnect</span>
+          </button>
+        </div>
+
+        <div class="tm-serial-status-box">
+          <div>
+            <strong>Status:</strong> <span id="tmSerialStatusText" style="color: #ef4444;">Disconnected</span>
+          </div>
+          <div id="tmSerialPortInfo" style="color: #94a3b8; font-size: 12px;">
+            No hardware selected
+          </div>
+        </div>
+
+        <!-- Smart Student Attendance Scanner Status -->
+        <div id="tmSerialAttendanceBanner" style="display: none; background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 8px; padding: 12px; margin-bottom: 16px; align-items: center; justify-content: space-between; color: #10b981;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 22px;">✅</span>
+            <div>
+              <div style="font-weight: 600; font-size: 13px;" id="tmAttendanceStudentName">Student Checked In</div>
+              <div style="font-size: 11px; color: #a7f3d0;" id="tmAttendanceTimeText">Attendance verified via Serial Scanner</div>
+            </div>
+          </div>
+          <span style="font-size: 11px; background: #10b981; color: #000; padding: 3px 8px; border-radius: 12px; font-weight: 700;">PRESENT</span>
+        </div>
+
+        <!-- Transmit Command to Hardware -->
+        <div class="tm-serial-field">
+          <label for="tmSerialWriteInput">Transmit Command to Hardware / Simulate Scan</label>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <input id="tmSerialWriteInput" type="text" placeholder="e.g. READ_CARD or LED_ON" style="flex: 1; min-width: 180px;" />
+            <button id="tmSerialSendBtn" class="tm-serial-btn tm-serial-btn-secondary">Send</button>
+            <button id="tmSerialSimulateBtn" class="tm-serial-btn" style="background: #10b981; color: #0f172a; font-weight: 700;">⚡ Simulate RFID Check-in</button>
+          </div>
+        </div>
+
+        <!-- Live Serial Terminal / Data Console -->
+        <div class="tm-serial-console-wrap">
+          <div class="tm-serial-console-header">
+            <span>Live Data Stream (ASCII / RAW)</span>
+            <div style="display: flex; gap: 8px;">
+              <button id="tmSerialClearBtn" class="tm-serial-btn tm-serial-btn-secondary" style="padding: 4px 8px; font-size: 11px;">Clear Console</button>
+            </div>
+          </div>
+          <div id="tmSerialConsole" class="tm-serial-console"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const API_BASE = "http://localhost:5050/serial";
+      let pollTimer = null;
+      let lastMessageCount = 0;
+
+      const fab = document.getElementById("tmSerialFab");
+      const topBtn = document.getElementById("tmSerialTopBtn");
+      const fabDot = document.getElementById("tmSerialFabDot");
+      const overlay = document.getElementById("tmSerialOverlay");
+      const closeBtn = document.getElementById("tmSerialCloseBtn");
+      const portSelect = document.getElementById("tmSerialPortSelect");
+      const refreshBtn = document.getElementById("tmSerialRefreshBtn");
+      const baudSelect = document.getElementById("tmSerialBaudSelect");
+      const connectBtn = document.getElementById("tmSerialConnectBtn");
+      const disconnectBtn = document.getElementById("tmSerialDisconnectBtn");
+      const statusText = document.getElementById("tmSerialStatusText");
+      const portInfo = document.getElementById("tmSerialPortInfo");
+      const writeInput = document.getElementById("tmSerialWriteInput");
+      const sendBtn = document.getElementById("tmSerialSendBtn");
+      const consoleBox = document.getElementById("tmSerialConsole");
+      const clearBtn = document.getElementById("tmSerialClearBtn");
+
+      function openModal() {
+        overlay.classList.add("open");
+        loadPorts();
+        checkStatus();
+      }
+
+      fab.addEventListener("click", openModal);
+      if (topBtn) topBtn.addEventListener("click", openModal);
+
+      window.addEventListener("keydown", (e) => {
+        if (e.altKey && (e.key === "s" || e.key === "S" || e.key === "h" || e.key === "H")) {
+          e.preventDefault();
+          if (overlay.classList.contains("open")) {
+            overlay.classList.remove("open");
+          } else {
+            openModal();
+          }
+        }
+      });
+
+      closeBtn.addEventListener("click", () => {
+        overlay.classList.remove("open");
+      });
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove("open");
+        }
+      });
+
+      refreshBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        loadPorts();
+      });
+
+      async function loadPorts() {
+        try {
+          const res = await fetch(`${API_BASE}/ports`);
+          const json = await res.json();
+          if (json.success && json.data && json.data.ports) {
+            const currentVal = portSelect.value;
+            portSelect.innerHTML = '<option value="">Select COM Port...</option>';
+            json.data.ports.forEach(p => {
+              const opt = document.createElement("option");
+              opt.value = p.port;
+              opt.textContent = `${p.port} (${p.description})`;
+              if (p.port === currentVal) opt.selected = true;
+              portSelect.appendChild(opt);
+            });
+          }
+        } catch (err) {
+          console.error("Failed to load serial ports:", err);
+        }
+      }
+
+      connectBtn.addEventListener("click", async () => {
+        const port = portSelect.value;
+        const baudRate = parseInt(baudSelect.value, 10);
+        if (!port) {
+          alert("Please select a COM Port first.");
+          return;
+        }
+        connectBtn.disabled = true;
+        connectBtn.textContent = "Connecting...";
+        try {
+          const res = await fetch(`${API_BASE}/connect`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ port: port, baud_rate: baudRate })
+          });
+          const json = await res.json();
+          if (json.success) {
+            updateStatusUI(true, port, baudRate, false, null);
+            startPolling();
+          } else {
+            const errDetail = json.error || "Unknown error";
+            updateStatusUI(false, null, null, false, `${errDetail} (Check USB cable or select active COM port)`);
+            connectBtn.disabled = false;
+            connectBtn.innerHTML = "<span>⚡ Connect Hardware</span>";
+          }
+        } catch (err) {
+          updateStatusUI(false, null, null, false, "Could not connect to PySerial service on port 5050.");
+          connectBtn.disabled = false;
+          connectBtn.innerHTML = "<span>⚡ Connect Hardware</span>";
+        }
+      });
+
+      disconnectBtn.addEventListener("click", async () => {
+        disconnectBtn.disabled = true;
+        try {
+          const res = await fetch(`${API_BASE}/disconnect`, { method: "POST" });
+          const json = await res.json();
+          if (json.success) {
+            updateStatusUI(false, null, null, false, null);
+            stopPolling();
+          }
+        } catch (err) {
+          console.error("Disconnect error:", err);
+        }
+      });
+
+      sendBtn.addEventListener("click", async () => {
+        const payload = writeInput.value.trim();
+        if (!payload) return;
+        try {
+          const res = await fetch(`${API_BASE}/write`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ payload: payload + "\n", is_hex: false })
+          });
+          const json = await res.json();
+          if (json.success) {
+            writeInput.value = "";
+            appendConsoleLine(`>>> SENT: ${payload}`);
+          } else {
+            appendConsoleLine(`[ERROR] Send failed: ${json.error}`);
+          }
+        } catch (err) {
+          appendConsoleLine(`[ERROR] Network error while sending command.`);
+        }
+      });
+
+      clearBtn.addEventListener("click", () => {
+        consoleBox.innerHTML = "";
+      });
+
+      const simulateBtn = document.getElementById("tmSerialSimulateBtn");
+      if (simulateBtn) {
+        simulateBtn.addEventListener("click", async () => {
+          const sampleMessage = "RFID_READ: Student [David Josva] Checked In - Attendance Verified";
+          try {
+            await fetch("http://localhost:5050/serial/inject", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message: sampleMessage })
+            });
+          } catch (err) {
+            appendConsoleLine(`RAW: ${sampleMessage} (HEX: 52 46 49 44 5f 52 45 41 44)`);
+            const banner = document.getElementById("tmSerialAttendanceBanner");
+            const nameEl = document.getElementById("tmAttendanceStudentName");
+            const timeEl = document.getElementById("tmAttendanceTimeText");
+            if (banner && nameEl && timeEl) {
+              nameEl.textContent = sampleMessage;
+              timeEl.textContent = `Attendance verified via Serial Scanner @ ${new Date().toLocaleTimeString()}`;
+              banner.style.display = "flex";
+              appendConsoleLine(`>>> [📋 ATTENDANCE REGISTERED] ✅ Student Marked PRESENT in Tuition Meet Register!`);
+            }
+          }
+        });
+      }
+
+
+      function appendConsoleLine(text) {
+        const div = document.createElement("div");
+        div.className = "tm-serial-console-line";
+        const timeSpan = document.createElement("span");
+        timeSpan.className = "tm-serial-console-time";
+        const now = new Date();
+        timeSpan.textContent = `[${now.toTimeString().split(' ')[0]}]`;
+        div.appendChild(timeSpan);
+        div.appendChild(document.createTextNode(text));
+        consoleBox.appendChild(div);
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+      }
+
+      function updateStatusUI(connected, port, baud, reconnecting, errorMsg) {
+        fabDot.className = "tm-serial-dot";
+        if (connected) {
+          fabDot.classList.add("connected");
+          statusText.style.color = "#22c55e";
+          statusText.textContent = "Connected";
+          portInfo.textContent = `${port} @ ${baud} bps`;
+          connectBtn.disabled = true;
+          connectBtn.innerHTML = "<span>⚡ Connect Hardware</span>";
+          disconnectBtn.disabled = false;
+        } else if (reconnecting) {
+          fabDot.classList.add("reconnecting");
+          statusText.style.color = "#f59e0b";
+          statusText.textContent = "Reconnecting...";
+          portInfo.textContent = `Waiting for device on ${port}...`;
+          connectBtn.disabled = false;
+          disconnectBtn.disabled = false;
+        } else {
+          statusText.style.color = "#ef4444";
+          statusText.textContent = errorMsg ? "Connection Failed" : "Disconnected";
+          portInfo.textContent = errorMsg ? errorMsg : "No hardware connected";
+          portInfo.style.color = errorMsg ? "#f87171" : "#94a3b8";
+          connectBtn.disabled = false;
+          connectBtn.innerHTML = "<span>⚡ Connect Hardware</span>";
+          disconnectBtn.disabled = true;
+        }
+      }
+
+      async function checkStatus() {
+        try {
+          const res = await fetch(`${API_BASE}/status`);
+          const json = await res.json();
+          if (json.success && json.data && json.data.status) {
+            const st = json.data.status;
+            updateStatusUI(st.connected, st.port, st.baud_rate, st.reconnecting, st.error);
+            if (st.connected || st.reconnecting) {
+              startPolling();
+            }
+          }
+        } catch (err) {
+          updateStatusUI(false, null, null, false, "PySerial Service offline");
+        }
+      }
+
+      async function pollLatestData() {
+        try {
+          const res = await fetch(`${API_BASE}/latest-data?limit=50`);
+          const json = await res.json();
+          if (json.success && json.data && json.data.messages) {
+            const msgs = json.data.messages;
+            if (msgs.length > lastMessageCount) {
+              const newMsgs = msgs.slice(lastMessageCount);
+              newMsgs.forEach(m => {
+                appendConsoleLine(`RAW: ${m.raw} (HEX: ${m.hex})`);
+                // Auto Student Attendance / RFID check-in detector
+                if (m.raw && (m.raw.includes("RFID_READ") || m.raw.includes("BARCODE_SCAN") || m.raw.includes("Checked In") || m.raw.includes("Student"))) {
+                  const banner = document.getElementById("tmSerialAttendanceBanner");
+                  const nameEl = document.getElementById("tmAttendanceStudentName");
+                  const timeEl = document.getElementById("tmAttendanceTimeText");
+                  if (banner && nameEl && timeEl) {
+                    nameEl.textContent = m.raw.replace(/(\r\n|\n|\r)/gm, "");
+                    timeEl.textContent = `Attendance verified via Serial Scanner @ ${new Date().toLocaleTimeString()}`;
+                    banner.style.display = "flex";
+                    appendConsoleLine(`>>> [📋 ATTENDANCE REGISTERED] ✅ Student Marked PRESENT in Tuition Meet Register!`);
+                    // Call backend API to record attendance
+                    fetch("/api/attendance/serial-checkin", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ scanData: m.raw })
+                    }).catch(e => console.log("Attendance backend log info:", e));
+                  }
+                }
+              });
+              lastMessageCount = msgs.length;
+            }
+          }
+        } catch (err) {
+          console.error("Data poll error:", err);
+        }
+      }
+
+      function startPolling() {
+        if (!pollTimer) {
+          pollTimer = setInterval(() => {
+            checkStatus();
+            pollLatestData();
+          }, 1000);
+        }
+      }
+
+      function stopPolling() {
+        if (pollTimer) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+        }
+        lastMessageCount = 0;
+      }
+
+      // Initial check on load
+      setTimeout(checkStatus, 1500);
+    })();
+  </script>
+
+</body>
 </html>

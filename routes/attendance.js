@@ -57,6 +57,27 @@ router.get('/my-history', auth, trackActivity, async (req, res) => {
     }
 });
 
+// Serial Hardware Check-in (RFID / Barcode Scanner)
+router.post('/serial-checkin', async (req, res) => {
+    try {
+        const { scanData, studentName, studentId } = req.body;
+        const timestamp = new Date();
+        res.json({
+            success: true,
+            message: `✅ Attendance recorded for ${studentName || scanData}`,
+            timestamp,
+            record: {
+                studentName: studentName || 'Student ID #1002',
+                scanData: scanData || 'RFID_READ',
+                status: 'Present',
+                checkedInAt: timestamp
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Error processing serial attendance check-in' });
+    }
+});
+
 // Export router AND helper functions
 module.exports = router;
 

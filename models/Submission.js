@@ -1,4 +1,5 @@
 const { getMemoryDB } = require('../config/database');
+const { wrapQuery } = require('./queryHelper');
 
 class Submission {
     static COLLECTION = 'submissions';
@@ -17,23 +18,24 @@ class Submission {
         });
     }
 
-    static async find(query = {}) {
-        const db = this.getDb();
-        
-        if (query.assignmentId) {
-            return await db.findWhere('assignmentId', query.assignmentId);
-        }
-        
-        if (query.studentId) {
-            return await db.findWhere('studentId', query.studentId);
-        }
-        
-        return await db.findAll();
+    static find(query = {}) {
+        return wrapQuery((async () => {
+            const db = this.getDb();
+            if (query.assignmentId) {
+                return await db.findWhere('assignmentId', query.assignmentId);
+            }
+            if (query.studentId) {
+                return await db.findWhere('studentId', query.studentId);
+            }
+            return await db.findAll();
+        })());
     }
 
-    static async findById(id) {
-        const db = this.getDb();
-        return await db.findById(id);
+    static findById(id) {
+        return wrapQuery((async () => {
+            const db = this.getDb();
+            return await db.findById(id);
+        })());
     }
 
     static async findByIdAndUpdate(id, updateData) {
