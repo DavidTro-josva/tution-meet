@@ -31,7 +31,6 @@ const progressRoutes = require('./routes/progress');
 setupLogger();
 
 const app = express();
-app.set('trust proxy', 1);
 app.use(helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false
@@ -40,6 +39,14 @@ app.use(helmet({
 // ─── Middleware ───────────────────────────────────────────────────
 app.use(cors(buildCorsOptions()));
 app.use(express.json());
+
+// Ensure DB is ready on serverless requests before handling any API routes
+app.use(async (req, res, next) => {
+    try {
+        await ensureDB();
+    } catch (e) {}
+    next();
+});
 
 // ─── API Routes ───────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
@@ -109,6 +116,12 @@ const ensureDB = async () => {
 
 // Kick off DB connection immediately on cold start
 ensureDB();
+
+// Global JSON error handler so Vercel NEVER returns HTML 500 error pages
+app.use((err, req, res, next) => {
+    console.error('Unhandled server error:', err);
+    res.status(500).json({ message: err.message || 'Server error occurred' });
+});
 
 // ─── Server Startup (local / Railway / Render) ────────────────────
 if (require.main === module) {

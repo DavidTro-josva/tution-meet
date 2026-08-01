@@ -12,7 +12,6 @@ const authRateLimiter = rateLimit({
     },
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    validate: { xForwardedForHeader: false }, // Prevent crash on Vercel/cloud reverse proxies
 });
 
 module.exports = { authRateLimiter };
